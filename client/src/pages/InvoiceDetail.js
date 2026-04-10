@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getInvoice, deleteInvoice, downloadPDF } from '../utils/api';
+import { getInvoice, deleteInvoice } from '../utils/api';
+import generatePDF from '..utils/api';
 
 const fmtNAD  = n => 'N$ ' + Number(n).toLocaleString('en-NA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtDate = d => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -23,14 +24,9 @@ export default function InvoiceDetail({ notify }) {
     navigate('/invoices');
   };
 
-  const handlePDF = async () => {
-    try {
-      const res = await downloadPDF(id);
-      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
-      const a = document.createElement('a'); a.href = url; a.download = `${inv.invoiceNumber}.pdf`; a.click();
-      URL.revokeObjectURL(url);
-      notify('PDF downloaded');
-    } catch { notify('PDF generation failed'); }
+  const handlePDF = () => {
+  generatePDF(inv);
+  notify('PDF downloaded');
   };
 
   if (loading) return <div className="loading">Loading...</div>;

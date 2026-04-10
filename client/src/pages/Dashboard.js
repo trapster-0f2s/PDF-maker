@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getStats, getInvoices, downloadPDF } from '../utils/api';
-
+import { getStats, getInvoice, downloadPDF } from '../utils/api';
+import generatePDF from '../utils/generatePDF';
 const fmtNAD  = n => 'N$ ' + Number(n).toLocaleString('en-NA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtDate = d => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
@@ -16,13 +16,8 @@ export default function Dashboard({ notify }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const handlePDF = async (id, num) => {
-    try {
-      const res = await downloadPDF(id);
-      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
-      const a = document.createElement('a'); a.href = url; a.download = `${num}.pdf`; a.click();
-      URL.revokeObjectURL(url);
-    } catch { notify('PDF generation failed'); }
+  const handlePDF = (inv) => {
+    generatePDF(inv);
   };
 
   if (loading) return <div className="loading">Loading...</div>;
@@ -82,7 +77,7 @@ export default function Dashboard({ notify }) {
                       <td style={{ fontSize: 12 }}>{fmtDate(inv.checkIn)} — {fmtDate(inv.checkOut)}</td>
                       <td style={{ fontWeight: 500 }}>{fmtNAD(total)}</td>
                       <td><span className={`badge badge-${inv.status}`}>{inv.status}</span></td>
-                      <td><button className="btn btn-outline btn-sm" onClick={() => handlePDF(inv._id, inv.invoiceNumber)}>↓ PDF</button></td>
+                      <td><button className="btn btn-outline btn-sm" onClick={() => handlePDF(inv)}>↓ PDF</button></td>
                     </tr>
                   );
                 })}

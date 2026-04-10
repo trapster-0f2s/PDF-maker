@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getInvoices, deleteInvoice, downloadPDF } from '../utils/api';
+import{ getInvoice, deleteInvoice } from '../utils/api';
+import generatePDF from '../utils/generatePDF';
 
 const fmtNAD  = n => 'N$ ' + Number(n).toLocaleString('en-NA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtDate = d => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -30,14 +31,10 @@ export default function InvoiceList({ notify }) {
     fetchInvoices();
   };
 
-  const handlePDF = async (id, num) => {
-    try {
-      const res = await downloadPDF(id);
-      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
-      const a = document.createElement('a'); a.href = url; a.download = `${num}.pdf`; a.click();
-      URL.revokeObjectURL(url);
-    } catch { notify('PDF generation failed'); }
+  const handlePDF = (inv) => {
+    generatePDF(inv);
   };
+    
 
   return (
     <div>
@@ -92,7 +89,7 @@ export default function InvoiceList({ notify }) {
                       <td>
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button className="btn btn-outline btn-sm" onClick={() => navigate(`/invoices/${inv._id}/edit`)}>Edit</button>
-                          <button className="btn btn-outline btn-sm" onClick={() => handlePDF(inv._id, inv.invoiceNumber)}>↓ PDF</button>
+                          <button className="btn btn-outline btn-sm" onClick={() => handlePDF(inv)}>↓ PDF</button>
                           <button className="btn btn-danger btn-sm"  onClick={() => handleDelete(inv._id, inv.invoiceNumber)}>Del</button>
                         </div>
                       </td>
