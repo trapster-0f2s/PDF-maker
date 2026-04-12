@@ -14,8 +14,8 @@ export default function InvoiceForm({ notify }) {
   const [form, setForm] = useState({
     invoiceNumber: genInvNo(),
     guestName: '', guestEmail: '', guestPhone: '',
-    roomType: '', checkIn: today(), checkOut: nextWeek(),
-    lineItems: [{ description: 'Room Accommodation', quantity: 7, unitPrice: 1200 }],
+    checkIn: today(), checkOut: nextWeek(),
+    lineItems: [{ description: 'House Accommodation', quantity: 7, unitPrice: 1200 }],
     taxRate: 15, amountPaid: 0, notes: '',
   });
   const [loading, setLoading] = useState(false);
@@ -29,7 +29,6 @@ export default function InvoiceForm({ notify }) {
       setForm({
         invoiceNumber: inv.invoiceNumber,
         guestName: inv.guestName, guestEmail: inv.guestEmail, guestPhone: inv.guestPhone || '',
-        roomType: inv.roomType,
         checkIn:  inv.checkIn.split('T')[0],
         checkOut: inv.checkOut.split('T')[0],
         lineItems: inv.lineItems,
@@ -102,7 +101,7 @@ export default function InvoiceForm({ notify }) {
               <div className="card-header"><span className="card-title">Guest Information</span></div>
               <div className="card-body form-grid">
                 <div className="form-row">
-                  <div className="field"><label>Full Name *</label><input value={form.guestName} onChange={e => set('guestName', e.target.value)} required placeholder="e.g. Robert Amukoto" /></div>
+                  <div className="field"><label>Full Name *</label><input value={form.guestName} onChange={e => set('guestName', e.target.value)} required placeholder="John Doe" /></div>
                   <div className="field"><label>Email *</label><input type="email" value={form.guestEmail} onChange={e => set('guestEmail', e.target.value)} required /></div>
                 </div>
                 <div className="field"><label>Phone</label><input value={form.guestPhone} onChange={e => set('guestPhone', e.target.value)} placeholder="+264 81 000 0000" /></div>
@@ -112,7 +111,6 @@ export default function InvoiceForm({ notify }) {
             <div className="card">
               <div className="card-header"><span className="card-title">Stay Details</span></div>
               <div className="card-body form-grid">
-                <div className="field"><label>Room Type *</label><input value={form.roomType} onChange={e => set('roomType', e.target.value)} required placeholder="e.g. Deluxe King Suite" /></div>
                 <div className="form-row">
                   <div className="field"><label>Check-in *</label><input type="date" value={form.checkIn} onChange={e => set('checkIn', e.target.value)} required /></div>
                   <div className="field"><label>Check-out *</label><input type="date" value={form.checkOut} onChange={e => set('checkOut', e.target.value)} required /></div>

@@ -60,9 +60,9 @@ export default function InvoiceDetail({ notify }) {
           <div className="card">
             <div style={{ padding: '22px 22px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div className="logo-mark">S</div>
+                <div className="logo-mark"><img src="/chateau-serene-logo.png" alt="Chateau Serene logo" /></div>
                 <div>
-                  <div style={{ fontFamily: "'DM Serif Display',serif", fontSize: 15 }}>Savanna Lodge</div>
+                  <div style={{ fontFamily: "'DM Serif Display',serif", fontSize: 15 }}>Chateau Serene</div>
                   <div style={{ fontSize: 11, color: 'var(--muted)' }}>Windhoek, Namibia · +264 61 000 0000</div>
                 </div>
               </div>
@@ -85,7 +85,7 @@ export default function InvoiceDetail({ notify }) {
                 <div>
                   <div style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Stay Period</div>
                   <div style={{ fontWeight: 500 }}>{fmtDate(inv.checkIn)} — {fmtDate(inv.checkOut)}</div>
-                  <div style={{ fontSize: 13, color: 'var(--muted)' }}>{nights(inv.checkIn, inv.checkOut)} nights · {inv.roomType}</div>
+                  <div style={{ fontSize: 13, color: 'var(--muted)' }}>{nights(inv.checkIn, inv.checkOut)} nights</div>
                 </div>
               </div>
 

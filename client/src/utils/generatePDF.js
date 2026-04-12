@@ -19,7 +19,7 @@ export default function generatePDF(inv) {
   doc.roundedRect(M, 14, 16, 16, 2, 2, 'F');
   doc.setTextColor(255,255,255);
   doc.setFont('helvetica','bold').setFontSize(11).text('S', M+8, 24, { align: 'center' });
-  doc.setTextColor(26,26,26).setFont('helvetica','bold').setFontSize(14).text('Savanna Lodge', M+20, 20);
+  doc.setTextColor(26,26,26).setFont('helvetica','bold').setFontSize(14).text('Chateau Serene', M+20, 20);
   doc.setFont('helvetica','normal').setFontSize(8).setTextColor(130,130,130)
      .text('Windhoek, Namibia  ·  +264 61 000 0000', M+20, 26);
   doc.setFontSize(8).setTextColor(130,130,130)
@@ -43,7 +43,7 @@ export default function generatePDF(inv) {
   y += 5;
   doc.setFont('helvetica','normal').setFontSize(8).setTextColor(100,100,100)
      .text(inv.guest_email, M, y)
-     .text(`${nights(inv.check_in, inv.check_out)} nights  ·  ${inv.room_type}`, W/2+5, y);
+     .text(`${nights(inv.check_in, inv.check_out)} nights`, W/2+5, y);
 
   // Table
   y += 12;
@@ -90,7 +90,7 @@ export default function generatePDF(inv) {
   // Footer
   doc.setDrawColor(220,220,220).setLineWidth(0.3).line(M, 278, W-M, 278);
   doc.setFont('helvetica','normal').setFontSize(7).setTextColor(170,170,170)
-     .text('Thank you for staying with Savanna Lodge. Payment due within 7 days.', W/2, 283, { align: 'center' });
+     .text('Thank you for staying with Chateau Serene. Payment due within 7 days.', W/2, 283, { align: 'center' });
 
   doc.save(`${inv.invoice_number}.pdf`);
 }

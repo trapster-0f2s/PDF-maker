@@ -12,15 +12,16 @@ function Toast({ message, onDone }) {
 
 export default function App() {
   const [toast, setToast] = useState(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const notify = (msg) => setToast(msg);
 
   return (
     <div className="layout">
-      <aside className="sidebar">
+      <aside className={`sidebar${sidebarCollapsed ? ' collapsed' : ''}`}>
         <div className="sidebar-logo">
-          <div className="logo-mark">S</div>
-          <div>
-            <div className="logo-name">Savanna Lodge</div>
+          <div className="logo-mark"><img src="/chateau-serene-logo.png" alt="Chateau Serene logo" /></div>
+          <div className="logo-text">
+            <div className="logo-name">Chateau Serene</div>
             <div className="logo-sub">Invoice Manager</div>
           </div>
         </div>
@@ -37,13 +38,16 @@ export default function App() {
               className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
             >
               <span className="nav-icon">{icon}</span>
-              {label}
+              <span className="nav-label">{label}</span>
             </NavLink>
           ))}
         </nav>
+        <button type="button" className="sidebar-toggle" onClick={() => setSidebarCollapsed(c => !c)}>
+          {sidebarCollapsed ? '→' : '←'}
+        </button>
       </aside>
 
-      <main className="main">
+      <main className="main" style={{ marginLeft: sidebarCollapsed ? 88 : 220 }}>
         <Routes>
           <Route path="/"                  element={<Dashboard   notify={notify} />} />
           <Route path="/invoices"          element={<InvoiceList notify={notify} />} />

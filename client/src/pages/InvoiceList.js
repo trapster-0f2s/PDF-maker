@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import{ getInvoice, deleteInvoice } from '../utils/api';
+import { getInvoices, getInvoice, deleteInvoice } from '../utils/api';
 import generatePDF from '../utils/generatePDF';
 
 const fmtNAD  = n => 'N$ ' + Number(n).toLocaleString('en-NA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -68,7 +68,7 @@ export default function InvoiceList({ notify }) {
           <div className="table-wrap">
             <table>
               <thead>
-                <tr><th>Invoice</th><th>Guest</th><th>Room</th><th>Check-in</th><th>Total</th><th>Paid</th><th>Status</th><th>Actions</th></tr>
+                <tr><th>Invoice</th><th>Guest</th><th>Check-in</th><th>Total</th><th>Paid</th><th>Status</th><th>Actions</th></tr>
               </thead>
               <tbody>
                 {invoices.map(inv => {
@@ -81,7 +81,6 @@ export default function InvoiceList({ notify }) {
                         <div style={{ fontWeight: 500 }}>{inv.guestName}</div>
                         <div style={{ fontSize: 11, color: 'var(--muted)' }}>{inv.guestEmail}</div>
                       </td>
-                      <td style={{ fontSize: 12 }}>{inv.roomType}</td>
                       <td style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDate(inv.checkIn)}</td>
                       <td style={{ fontWeight: 500 }}>{fmtNAD(total)}</td>
                       <td style={{ color: 'var(--green-fg)' }}>{fmtNAD(inv.amountPaid)}</td>
