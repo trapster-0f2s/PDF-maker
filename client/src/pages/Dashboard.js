@@ -12,7 +12,7 @@ export default function Dashboard({ notify }) {
 
   useEffect(() => {
     Promise.all([getStats(), getInvoices({ limit: 5 })])
-      .then(([s, r]) => { setStats(s.data); setRecent(r.data.invoices); })
+      .then(([s, r]) => { setStats(s); setRecent(r.invoices); })
       .finally(() => setLoading(false));
   }, []);
 
