@@ -22,7 +22,7 @@ export default function InvoiceForm({ notify }) {
   const [saving,  setSaving]  = useState(false);
 
   useEffect(() => {
-    if (!isEdit) return;
+    if (!isEdit || !id) return;
     setLoading(true);
     getInvoice(id)
       .then(inv => {

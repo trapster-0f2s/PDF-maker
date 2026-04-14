@@ -5,7 +5,16 @@ const fmtNAD  = n => 'N$ ' + Number(n).toLocaleString('en-NA', { minimumFraction
 const fmtDate = d => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const nights  = (a, b) => Math.max(0, Math.round((new Date(b) - new Date(a)) / 86400000));
 
-export default function generatePDF(inv) {
+const blobToBase64 = (blob) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
+
+export default async function generatePDF(inv) {
   const doc  = new jsPDF({ unit: 'mm', format: 'a4' });
   const W    = 210, M = 20;
   const lineItems = inv.lineItems || inv.line_items || [];
@@ -15,11 +24,21 @@ export default function generatePDF(inv) {
   const bal  = total - (inv.amountPaid ?? inv.amount_paid);
   const statusText = bal <= 0 ? 'PAID' : (inv.amountPaid ?? inv.amount_paid) > 0 ? 'PARTIAL' : 'UNPAID';
 
-  // Header
-  doc.setFillColor(26, 26, 26);
-  doc.roundedRect(M, 14, 16, 16, 2, 2, 'F');
-  doc.setTextColor(255,255,255);
-  doc.setFont('helvetica','bold').setFontSize(11).text('S', M+8, 24, { align: 'center' });
+  // Header with Logo
+  try {
+    const logoResponse = await fetch('/ChateauLogo.JPG');
+    if (logoResponse.ok) {
+      const blob = await logoResponse.blob();
+      const logoData = await blobToBase64(blob);
+      doc.addImage(logoData, 'JPEG', M, 14, 16, 16);
+    }
+  } catch (e) {
+    // Fallback to text if image fails to load
+    doc.setFillColor(26, 26, 26);
+    doc.roundedRect(M, 14, 16, 16, 2, 2, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold').setFontSize(11).text('S', M+8, 24, { align: 'center' });
+  }
   doc.setTextColor(26,26,26).setFont('helvetica','bold').setFontSize(14).text('Chateau Serene', M+20, 20);
   doc.setFont('helvetica','normal').setFontSize(8).setTextColor(130,130,130)
      .text('Windhoek, Namibia  ·  +264 61 000 0000', M+20, 26);

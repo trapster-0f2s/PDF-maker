@@ -37,8 +37,8 @@ export default function InvoiceList({ notify }) {
     fetchInvoices();
   };
 
-  const handlePDF = (inv) => {
-    generatePDF(inv);
+  const handlePDF = async (inv) => {
+    await generatePDF(inv);
   };
     
 

@@ -23,8 +23,8 @@ export default function Dashboard({ notify }) {
       .finally(() => setLoading(false));
   }, [notify]);
 
-  const handlePDF = (inv) => {
-    generatePDF(inv);
+  const handlePDF = async (inv) => {
+    await generatePDF(inv);
   };
 
   if (loading) return <div className="loading">Loading...</div>;

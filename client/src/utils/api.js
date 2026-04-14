@@ -61,6 +61,7 @@ export const getInvoices = async ({ search, status, page = 1, limit = 15 }) => {
 };
 
 export const getInvoice = async (id) => {
+  if (!id || id === 'undefined') throw new Error('Invalid invoice ID');
   const { data, error } = await supabase.from('invoices').select('*').eq('id', id).single();
   if (error) throw makeError(error);
   return normalizeInvoice(data);

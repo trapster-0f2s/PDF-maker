@@ -19,7 +19,7 @@ export default function App() {
     <div className="layout">
       <aside className={`sidebar${sidebarCollapsed ? ' collapsed' : ''}`}>
         <div className="sidebar-logo">
-          <div className="logo-mark"><img src="/chateau-serene-logo.png" alt="Chateau Serene logo" /></div>
+          <div className="logo-mark"><img src="/ChateauLogo.JPG" alt="Chateau Serene logo" /></div>
           <div className="logo-text">
             <div className="logo-name">Chateau Serene</div>
             <div className="logo-sub">Invoice Manager</div>
