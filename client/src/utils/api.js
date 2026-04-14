@@ -10,6 +10,36 @@ const supabase = createClient(
 
 export default supabase;
 
+const normalizeInvoice = (invoice) => ({
+  ...invoice,
+  id: invoice.id || invoice._id,
+  invoiceNumber: invoice.invoiceNumber || invoice.invoice_number,
+  guestName: invoice.guestName || invoice.guest_name,
+  guestEmail: invoice.guestEmail || invoice.guest_email,
+  guestPhone: invoice.guestPhone || invoice.guest_phone,
+  checkIn: invoice.checkIn || invoice.check_in,
+  checkOut: invoice.checkOut || invoice.check_out,
+  taxRate: invoice.taxRate ?? invoice.tax_rate,
+  amountPaid: invoice.amountPaid ?? invoice.amount_paid,
+  lineItems: invoice.lineItems || invoice.line_items || [],
+  createdAt: invoice.createdAt || invoice.created_at,
+  updatedAt: invoice.updatedAt || invoice.updated_at,
+});
+
+function makeError(error) {
+  if (!error) return new Error('Unknown error');
+  const message = typeof error === 'string'
+    ? error
+    : error.message || error.msg || JSON.stringify(error);
+  const err = new Error(message);
+  if (typeof error === 'object' && error !== null) {
+    err.code = error.code;
+    err.details = error.details;
+    err.hint = error.hint;
+  }
+  return err;
+}
+
 function calcStatus(lineItems, taxRate, amountPaid) {
   const subtotal = lineItems.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
   const total    = subtotal + subtotal * (taxRate / 100);
@@ -26,14 +56,14 @@ export const getInvoices = async ({ search, status, page = 1, limit = 15 }) => {
   const { data, error, count } = await query
     .order('created_at', { ascending: false })
     .range(from, from + limit - 1);
-  if (error) throw error;
-  return { invoices: data, total: count, pages: Math.ceil(count / limit) };
+  if (error) throw makeError(error);
+  return { invoices: data.map(normalizeInvoice), total: count, pages: Math.ceil(count / limit) };
 };
 
 export const getInvoice = async (id) => {
   const { data, error } = await supabase.from('invoices').select('*').eq('id', id).single();
-  if (error) throw error;
-  return data;
+  if (error) throw makeError(error);
+  return normalizeInvoice(data);
 };
 
 export const createInvoice = async (form) => {
@@ -50,8 +80,8 @@ export const createInvoice = async (form) => {
     status:         calcStatus(form.lineItems, form.taxRate, form.amountPaid),
     notes:          form.notes || '',
   }).select().single();
-  if (error) throw error;
-  return data;
+  if (error) throw makeError(error);
+  return normalizeInvoice(data);
 };
 
 export const updateInvoice = async (id, form) => {
@@ -69,21 +99,22 @@ export const updateInvoice = async (id, form) => {
     notes:          form.notes || '',
     updated_at:     new Date().toISOString(),
   }).eq('id', id).select().single();
-  if (error) throw error;
-  return data;
+  if (error) throw makeError(error);
+  return normalizeInvoice(data);
 };
 
 export const deleteInvoice = async (id) => {
   const { error } = await supabase.from('invoices').delete().eq('id', id);
-  if (error) throw error;
+  if (error) throw makeError(error);
 };
 
 export const getStats = async () => {
   const { data, error } = await supabase.from('invoices').select('*');
-  if (error) throw error;
+  if (error) throw makeError(error);
   let revenue = 0, outstanding = 0;
   data.forEach(inv => {
-    const sub     = inv.line_items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+    const items = inv.line_items || [];
+    const sub     = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
     const total   = sub + sub * (inv.tax_rate / 100);
     const balance = total - inv.amount_paid;
     revenue     += total;

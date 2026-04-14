@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getInvoice, deleteInvoice } from '../utils/api';
-import generatePDF from '../utils/api';
+import generatePDF from '../utils/generatePDF';
 
 const fmtNAD  = n => 'N$ ' + Number(n).toLocaleString('en-NA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtDate = d => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -14,8 +14,14 @@ export default function InvoiceDetail({ notify }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getInvoice(id).then(r => setInv(r.data)).finally(() => setLoading(false));
-  }, [id]);
+    getInvoice(id)
+      .then(invoice => setInv(invoice))
+      .catch(err => {
+        console.error('Invoice load failed', err);
+        notify?.('Unable to load invoice');
+      })
+      .finally(() => setLoading(false));
+  }, [id, notify]);
 
   const handleDelete = async () => {
     if (!window.confirm(`Delete ${inv.invoiceNumber}?`)) return;
@@ -32,7 +38,8 @@ export default function InvoiceDetail({ notify }) {
   if (loading) return <div className="loading">Loading...</div>;
   if (!inv)    return <div className="loading">Invoice not found</div>;
 
-  const subtotal = inv.lineItems.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+  const lineItems = inv.lineItems || inv.line_items || [];
+  const subtotal = lineItems.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
   const tax      = subtotal * (inv.taxRate / 100);
   const total    = subtotal + tax;
   const balance  = total - inv.amountPaid;
@@ -98,7 +105,7 @@ export default function InvoiceDetail({ notify }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {inv.lineItems.map((item, i) => (
+                  {(inv.lineItems || inv.line_items || []).map((item, i) => (
                     <tr key={i}>
                       <td style={{ padding: '10px 0', borderBottom: '1px solid var(--border)', fontSize: 13 }}>{item.description}</td>
                       <td style={{ padding: '10px 0', borderBottom: '1px solid var(--border)', fontSize: 13, textAlign: 'right' }}>{item.quantity}</td>

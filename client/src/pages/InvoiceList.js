@@ -18,7 +18,13 @@ export default function InvoiceList({ notify }) {
   const fetchInvoices = useCallback(() => {
     setLoading(true);
     getInvoices({ search, status, page, limit: 15 })
-      .then(r => { setInvoices(r.data.invoices); setPages(r.data.pages); })
+      .then(r => { setInvoices(r.invoices); setPages(r.pages); })
+      .catch(err => {
+        console.error('Failed to load invoices', err);
+        notify?.('Unable to load invoices');
+        setInvoices([]);
+        setPages(1);
+      })
       .finally(() => setLoading(false));
   }, [search, status, page]);
 
@@ -72,16 +78,17 @@ export default function InvoiceList({ notify }) {
               </thead>
               <tbody>
                 {invoices.map(inv => {
-                  const sub   = inv.lineItems.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
-                  const total = sub + sub * (inv.taxRate / 100);
+                  const lineItems = inv.lineItems || inv.line_items || [];
+                  const sub   = lineItems.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+                  const total = sub + sub * ((inv.taxRate ?? inv.tax_rate) / 100);
                   return (
-                    <tr key={inv._id}>
-                      <td><Link to={`/invoices/${inv._id}`} style={{ fontWeight: 500 }}>{inv.invoiceNumber}</Link></td>
+                    <tr key={inv.id || inv._id}>
+                      <td><Link to={`/invoices/${inv.id || inv._id}`} style={{ fontWeight: 500 }}>{inv.invoiceNumber || inv.invoice_number}</Link></td>
                       <td>
-                        <div style={{ fontWeight: 500 }}>{inv.guestName}</div>
-                        <div style={{ fontSize: 11, color: 'var(--muted)' }}>{inv.guestEmail}</div>
+                        <div style={{ fontWeight: 500 }}>{inv.guestName || inv.guest_name}</div>
+                        <div style={{ fontSize: 11, color: 'var(--muted)' }}>{inv.guestEmail || inv.guest_email}</div>
                       </td>
-                      <td style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDate(inv.checkIn)}</td>
+                      <td style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDate(inv.checkIn || inv.check_in)}</td>
                       <td style={{ fontWeight: 500 }}>{fmtNAD(total)}</td>
                       <td style={{ color: 'var(--green-fg)' }}>{fmtNAD(inv.amountPaid)}</td>
                       <td><span className={`badge badge-${inv.status}`}>{inv.status}</span></td>

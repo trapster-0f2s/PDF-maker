@@ -8,11 +8,12 @@ const nights  = (a, b) => Math.max(0, Math.round((new Date(b) - new Date(a)) / 8
 export default function generatePDF(inv) {
   const doc  = new jsPDF({ unit: 'mm', format: 'a4' });
   const W    = 210, M = 20;
-  const sub  = inv.line_items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
-  const tax  = sub * (inv.tax_rate / 100);
+  const lineItems = inv.lineItems || inv.line_items || [];
+  const sub  = lineItems.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+  const tax  = sub * ((inv.taxRate ?? inv.tax_rate) / 100);
   const total = sub + tax;
-  const bal  = total - inv.amount_paid;
-  const statusText = bal <= 0 ? 'PAID' : inv.amount_paid > 0 ? 'PARTIAL' : 'UNPAID';
+  const bal  = total - (inv.amountPaid ?? inv.amount_paid);
+  const statusText = bal <= 0 ? 'PAID' : (inv.amountPaid ?? inv.amount_paid) > 0 ? 'PARTIAL' : 'UNPAID';
 
   // Header
   doc.setFillColor(26, 26, 26);
@@ -26,8 +27,8 @@ export default function generatePDF(inv) {
      .text('Invoice No.', W-M, 18, { align: 'right' })
      .text('Date',        W-M, 28, { align: 'right' });
   doc.setFont('helvetica','bold').setFontSize(9).setTextColor(26,26,26)
-     .text(inv.invoice_number,       W-M, 23, { align: 'right' })
-     .text(fmtDate(inv.created_at),  W-M, 33, { align: 'right' });
+     .text(inv.invoiceNumber || inv.invoice_number,       W-M, 23, { align: 'right' })
+     .text(fmtDate(inv.createdAt || inv.created_at),  W-M, 33, { align: 'right' });
 
   // Title
   doc.setFont('helvetica','bold').setFontSize(22).setTextColor(26,26,26).text('Invoice', M, 50);
@@ -38,12 +39,12 @@ export default function generatePDF(inv) {
      .text('BILLED TO', M, y).text('STAY PERIOD', W/2+5, y);
   y += 5;
   doc.setFont('helvetica','bold').setFontSize(10).setTextColor(26,26,26)
-     .text(inv.guest_name, M, y)
-     .text(`${fmtDate(inv.check_in)} — ${fmtDate(inv.check_out)}`, W/2+5, y);
+     .text(inv.guestName || inv.guest_name, M, y)
+     .text(`${fmtDate(inv.checkIn || inv.check_in)} — ${fmtDate(inv.checkOut || inv.check_out)}`, W/2+5, y);
   y += 5;
   doc.setFont('helvetica','normal').setFontSize(8).setTextColor(100,100,100)
-     .text(inv.guest_email, M, y)
-     .text(`${nights(inv.check_in, inv.check_out)} nights`, W/2+5, y);
+     .text(inv.guestEmail || inv.guest_email, M, y)
+     .text(`${nights(inv.checkIn || inv.check_in, inv.checkOut || inv.check_out)} nights`, W/2+5, y);
 
   // Table
   y += 12;
@@ -58,7 +59,7 @@ export default function generatePDF(inv) {
   doc.line(M, y, W-M, y);
   y += 6;
 
-  inv.line_items.forEach(item => {
+  lineItems.forEach(item => {
     doc.setTextColor(50,50,50).setFontSize(9)
        .text(item.description,                       M,   y)
        .text(String(item.quantity),                  120, y, { align: 'right' })
@@ -73,9 +74,9 @@ export default function generatePDF(inv) {
   const lx = 130;
   doc.setFontSize(9).setTextColor(100,100,100).setFont('helvetica','normal')
      .text('Subtotal',             lx, y).text(fmtNAD(sub),  W-M, y, { align: 'right' }); y += 6;
-  doc.text(`VAT (${inv.tax_rate}%)`, lx, y).text(fmtNAD(tax), W-M, y, { align: 'right' }); y += 6;
+  doc.text(`VAT (${inv.taxRate ?? inv.tax_rate}%)`, lx, y).text(fmtNAD(tax), W-M, y, { align: 'right' }); y += 6;
   doc.setTextColor(59,109,17)
-     .text('Amount Paid', lx, y).text(`− ${fmtNAD(inv.amount_paid)}`, W-M, y, { align: 'right' }); y += 3;
+     .text('Amount Paid', lx, y).text(`− ${fmtNAD(inv.amountPaid ?? inv.amount_paid)}`, W-M, y, { align: 'right' }); y += 3;
   doc.setDrawColor(26,26,26).setLineWidth(0.6).line(lx, y, W-M, y); y += 5;
   doc.setFont('helvetica','bold').setFontSize(10).setTextColor(26,26,26)
      .text('Balance Due', lx, y).text(fmtNAD(Math.max(0, bal)), W-M, y, { align: 'right' });
@@ -92,5 +93,5 @@ export default function generatePDF(inv) {
   doc.setFont('helvetica','normal').setFontSize(7).setTextColor(170,170,170)
      .text('Thank you for staying with Chateau Serene. Payment due within 7 days.', W/2, 283, { align: 'center' });
 
-  doc.save(`${inv.invoice_number}.pdf`);
+  doc.save(`${inv.invoiceNumber || inv.invoice_number}.pdf`);
 }

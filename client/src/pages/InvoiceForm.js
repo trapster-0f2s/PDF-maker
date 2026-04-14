@@ -24,18 +24,23 @@ export default function InvoiceForm({ notify }) {
   useEffect(() => {
     if (!isEdit) return;
     setLoading(true);
-    getInvoice(id).then(r => {
-      const inv = r.data;
-      setForm({
-        invoiceNumber: inv.invoiceNumber,
-        guestName: inv.guestName, guestEmail: inv.guestEmail, guestPhone: inv.guestPhone || '',
-        checkIn:  inv.checkIn.split('T')[0],
-        checkOut: inv.checkOut.split('T')[0],
-        lineItems: inv.lineItems,
-        taxRate: inv.taxRate, amountPaid: inv.amountPaid, notes: inv.notes || '',
-      });
-    }).finally(() => setLoading(false));
-  }, [id, isEdit]);
+    getInvoice(id)
+      .then(inv => {
+        setForm({
+          invoiceNumber: inv.invoiceNumber,
+          guestName: inv.guestName, guestEmail: inv.guestEmail, guestPhone: inv.guestPhone || '',
+          checkIn:  inv.checkIn.split('T')[0],
+          checkOut: inv.checkOut.split('T')[0],
+          lineItems: inv.lineItems,
+          taxRate: inv.taxRate, amountPaid: inv.amountPaid, notes: inv.notes || '',
+        });
+      })
+      .catch(err => {
+        console.error('Invoice form load failed', err);
+        notify?.('Unable to load invoice');
+      })
+      .finally(() => setLoading(false));
+  }, [id, isEdit, notify]);
 
   const set     = (key, val) => setForm(f => ({ ...f, [key]: val }));
   const setLine = (i, key, val) => {
@@ -63,10 +68,10 @@ export default function InvoiceForm({ notify }) {
       } else {
         const res = await createInvoice(form);
         notify('Invoice created');
-        navigate(`/invoices/${res.data._id}`);
+        navigate(`/invoices/${res.id}`);
       }
     } catch (err) {
-      notify(err.response?.data?.error || 'Save failed');
+      notify(err.message || 'Save failed');
     } finally {
       setSaving(false);
     }

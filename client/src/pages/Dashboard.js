@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getStats, getInvoices } from '../utils/api';
 import generatePDF from '../utils/generatePDF';
+
 const fmtNAD  = n => 'N$ ' + Number(n).toLocaleString('en-NA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtDate = d => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
@@ -13,8 +14,14 @@ export default function Dashboard({ notify }) {
   useEffect(() => {
     Promise.all([getStats(), getInvoices({ limit: 5 })])
       .then(([s, r]) => { setStats(s); setRecent(r.invoices); })
+      .catch(err => {
+        console.error('Dashboard load failed', err);
+        notify?.('Unable to load dashboard data');
+        setStats({ total: 0, revenue: 0, outstanding: 0, paid: 0, partial: 0, unpaid: 0 });
+        setRecent([]);
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [notify]);
 
   const handlePDF = (inv) => {
     generatePDF(inv);
@@ -65,16 +72,17 @@ export default function Dashboard({ notify }) {
               </thead>
               <tbody>
                 {recent.map(inv => {
-                  const sub   = inv.lineItems.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
-                  const total = sub + sub * (inv.taxRate / 100);
+                  const lineItems = inv.lineItems || inv.line_items || [];
+                  const sub   = lineItems.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+                  const total = sub + sub * ((inv.taxRate ?? inv.tax_rate) / 100);
                   return (
-                    <tr key={inv._id}>
-                      <td><Link to={`/invoices/${inv._id}`} style={{ fontWeight: 500 }}>{inv.invoiceNumber}</Link></td>
+                    <tr key={inv.id}>
+                      <td><Link to={`/invoices/${inv.id}`} style={{ fontWeight: 500 }}>{inv.invoiceNumber || inv.invoice_number}</Link></td>
                       <td>
-                        <div style={{ fontWeight: 500 }}>{inv.guestName}</div>
-                        <div style={{ fontSize: 12, color: 'var(--muted)' }}>{inv.guestEmail}</div>
+                        <div style={{ fontWeight: 500 }}>{inv.guestName || inv.guest_name}</div>
+                        <div style={{ fontSize: 12, color: 'var(--muted)' }}>{inv.guestEmail || inv.guest_email}</div>
                       </td>
-                      <td style={{ fontSize: 12 }}>{fmtDate(inv.checkIn)} — {fmtDate(inv.checkOut)}</td>
+                      <td style={{ fontSize: 12 }}>{fmtDate(inv.checkIn || inv.check_in)} — {fmtDate(inv.checkOut || inv.check_out)}</td>
                       <td style={{ fontWeight: 500 }}>{fmtNAD(total)}</td>
                       <td><span className={`badge badge-${inv.status}`}>{inv.status}</span></td>
                       <td><button className="btn btn-outline btn-sm" onClick={() => handlePDF(inv)}>↓ PDF</button></td>
