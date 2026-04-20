@@ -78,12 +78,13 @@ export default function InvoiceList({ notify }) {
               </thead>
               <tbody>
                 {invoices.map(inv => {
+                  const invoiceId = inv.id || inv._id;
                   const lineItems = inv.lineItems || inv.line_items || [];
                   const sub   = lineItems.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
                   const total = sub + sub * ((inv.taxRate ?? inv.tax_rate) / 100);
                   return (
-                    <tr key={inv.id || inv._id}>
-                      <td><Link to={`/invoices/${inv.id || inv._id}`} style={{ fontWeight: 500 }}>{inv.invoiceNumber || inv.invoice_number}</Link></td>
+                    <tr key={invoiceId}>
+                      <td><Link to={`/invoices/${invoiceId}`} style={{ fontWeight: 500 }}>{inv.invoiceNumber || inv.invoice_number}</Link></td>
                       <td>
                         <div style={{ fontWeight: 500 }}>{inv.guestName || inv.guest_name}</div>
                         <div style={{ fontSize: 11, color: 'var(--muted)' }}>{inv.guestEmail || inv.guest_email}</div>
@@ -94,9 +95,9 @@ export default function InvoiceList({ notify }) {
                       <td><span className={`badge badge-${inv.status}`}>{inv.status}</span></td>
                       <td>
                         <div style={{ display: 'flex', gap: 6 }}>
-                          <button className="btn btn-outline btn-sm" onClick={() => navigate(`/invoices/${inv._id}/edit`)}>Edit</button>
+                          <button className="btn btn-outline btn-sm" onClick={() => navigate(`/invoices/${invoiceId}/edit`)}>Edit</button>
                           <button className="btn btn-outline btn-sm" onClick={() => handlePDF(inv)}>↓ PDF</button>
-                          <button className="btn btn-danger btn-sm"  onClick={() => handleDelete(inv._id, inv.invoiceNumber)}>Del</button>
+                          <button className="btn btn-danger btn-sm"  onClick={() => handleDelete(invoiceId, inv.invoiceNumber)}>Del</button>
                         </div>
                       </td>
                     </tr>
