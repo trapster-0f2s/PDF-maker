@@ -1,4 +1,3 @@
-// client/src/utils/generatePDF.js
 import jsPDF from 'jspdf';
 
 const fmtNAD  = n => 'N$ ' + Number(n).toLocaleString('en-NA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
