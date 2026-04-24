@@ -14,8 +14,9 @@ export default function InvoiceForm({ notify }) {
   const [form, setForm] = useState({
     invoiceNumber: genInvNo(),
     guestName: '', guestEmail: '', guestPhone: '',
+    roomType: 'Standard',
     checkIn: today(), checkOut: nextWeek(),
-    lineItems: [{ description: 'House Accommodation', quantity: 7, unitPrice: 1200 }],
+    lineItems: [{ description: 'Accommodation', quantity: 7, unitPrice: 1200 }],
     taxRate: 15, amountPaid: 0, notes: '',
   });
   const [loading, setLoading] = useState(false);
@@ -29,6 +30,7 @@ export default function InvoiceForm({ notify }) {
         setForm({
           invoiceNumber: inv.invoiceNumber,
           guestName: inv.guestName, guestEmail: inv.guestEmail, guestPhone: inv.guestPhone || '',
+          roomType: inv.roomType || '',
           checkIn:  inv.checkIn.split('T')[0],
           checkOut: inv.checkOut.split('T')[0],
           lineItems: inv.lineItems,
@@ -120,6 +122,7 @@ export default function InvoiceForm({ notify }) {
                   <div className="field"><label>Check-in *</label><input type="date" value={form.checkIn} onChange={e => set('checkIn', e.target.value)} required /></div>
                   <div className="field"><label>Check-out *</label><input type="date" value={form.checkOut} onChange={e => set('checkOut', e.target.value)} required /></div>
                 </div>
+                <div className="field"><label>Room Type *</label><input value={form.roomType} onChange={e => set('roomType', e.target.value)} required placeholder="Standard" /></div>
               </div>
             </div>
 
