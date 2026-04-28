@@ -17,10 +17,14 @@ export default function InvoiceForm({ notify }) {
     roomType: 'Standard',
     checkIn: today(), checkOut: nextWeek(),
     lineItems: [{ description: 'Accommodation', quantity: 7, unitPrice: 1200 }],
-    taxRate: 15, amountPaid: 0, notes: '',
+    taxRate: 15, amountPaid: '0', notes: '',
   });
   const [loading, setLoading] = useState(false);
   const [saving,  setSaving]  = useState(false);
+
+  const phonePattern = /^\+?[0-9\s\-()]{7,20}$/;
+  const isValidPhone = (phone) => phone === '' || phonePattern.test(phone);
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   useEffect(() => {
     if (!isEdit || !id) return;
@@ -34,7 +38,7 @@ export default function InvoiceForm({ notify }) {
           checkIn:  inv.checkIn.split('T')[0],
           checkOut: inv.checkOut.split('T')[0],
           lineItems: inv.lineItems,
-          taxRate: inv.taxRate, amountPaid: inv.amountPaid, notes: inv.notes || '',
+          taxRate: inv.taxRate, amountPaid: String(inv.amountPaid), notes: inv.notes || '',
         });
       })
       .catch(err => {
@@ -56,11 +60,19 @@ export default function InvoiceForm({ notify }) {
   const subtotal = form.lineItems.reduce((s, l) => s + l.quantity * l.unitPrice, 0);
   const tax      = subtotal * (form.taxRate / 100);
   const total    = subtotal + tax;
-  const balance  = total - form.amountPaid;
+  const balance  = total - (Number(form.amountPaid) || 0);
   const fmtNAD   = n => 'N$ ' + Number(n).toLocaleString('en-NA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!isValidEmail(form.guestEmail)) {
+      notify('Please enter a valid email address');
+      return;
+    }
+    if (!isValidPhone(form.guestPhone)) {
+      notify('Please enter a valid phone number');
+      return;
+    }
     setSaving(true);
     try {
       if (isEdit) {
@@ -91,7 +103,7 @@ export default function InvoiceForm({ notify }) {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20 }} className="invoice-form-grid">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
             <div className="card">
@@ -111,7 +123,7 @@ export default function InvoiceForm({ notify }) {
                   <div className="field"><label>Full Name *</label><input value={form.guestName} onChange={e => set('guestName', e.target.value)} required placeholder="John Doe" /></div>
                   <div className="field"><label>Email *</label><input type="email" value={form.guestEmail} onChange={e => set('guestEmail', e.target.value)} required /></div>
                 </div>
-                <div className="field"><label>Phone</label><input value={form.guestPhone} onChange={e => set('guestPhone', e.target.value)} placeholder="+264 81 000 0000" /></div>
+                <div className="field"><label>Phone</label><input type="tel" inputMode="tel" pattern="\\+?[0-9\\s\\-()]{7,20}" value={form.guestPhone} onChange={e => set('guestPhone', e.target.value)} placeholder="+264 81 000 0000" title="Digits, spaces, hyphens, parentheses, optional leading +" /></div>
               </div>
             </div>
 
@@ -132,13 +144,13 @@ export default function InvoiceForm({ notify }) {
                 <button type="button" className="btn btn-outline btn-sm" onClick={addLine}>+ Add Item</button>
               </div>
               <div className="card-body">
-                <div style={{ display: 'grid', gridTemplateColumns: '3fr 80px 120px 36px', gap: 8, marginBottom: 6 }}>
+                <div className="line-items-header">
                   {['Description','Qty','Unit Price',''].map(h => (
                     <div key={h} style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</div>
                   ))}
                 </div>
                 {form.lineItems.map((line, i) => (
-                  <div key={i} style={{ display: 'grid', gridTemplateColumns: '3fr 80px 120px 36px', gap: 8, marginBottom: 8 }}>
+                  <div key={i} className="line-items-row">
                     <input value={line.description} onChange={e => setLine(i, 'description', e.target.value)} placeholder="Description" required />
                     <input type="number" min="1" value={line.quantity} onChange={e => setLine(i, 'quantity', e.target.value)} />
                     <input type="number" min="0" value={line.unitPrice} onChange={e => setLine(i, 'unitPrice', e.target.value)} />
@@ -169,7 +181,7 @@ export default function InvoiceForm({ notify }) {
                 <hr className="divider" />
                 <div className="field">
                   <label>Amount Paid (N$)</label>
-                  <input type="number" min="0" step="0.01" value={form.amountPaid} onChange={e => set('amountPaid', Number(e.target.value))} />
+                  <input type="number" min="0" step="0.01" value={form.amountPaid} onChange={e => set('amountPaid', e.target.value === '' ? '0' : e.target.value)} />
                 </div>
                 <div style={{ marginTop: 12 }}>
                   <div className="total-row" style={{ fontWeight: 500, color: balance > 0 ? 'var(--red-fg)' : 'var(--green-fg)' }}>

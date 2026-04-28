@@ -21,7 +21,7 @@ const normalizeInvoice = (invoice) => ({
   checkIn: invoice.checkIn || invoice.check_in,
   checkOut: invoice.checkOut || invoice.check_out,
   taxRate: invoice.taxRate ?? invoice.tax_rate,
-  amountPaid: invoice.amountPaid ?? invoice.amount_paid,
+  amountPaid: Number(invoice.amountPaid ?? invoice.amount_paid) || 0,
   lineItems: invoice.lineItems || invoice.line_items || [],
   createdAt: invoice.createdAt || invoice.created_at,
   updatedAt: invoice.updatedAt || invoice.updated_at,
@@ -79,8 +79,8 @@ export const createInvoice = async (form) => {
     check_out:      form.checkOut,
     line_items:     form.lineItems,
     tax_rate:       form.taxRate,
-    amount_paid:    form.amountPaid,
-    status:         calcStatus(form.lineItems, form.taxRate, form.amountPaid),
+    amount_paid:    Number(form.amountPaid) || 0,
+    status:         calcStatus(form.lineItems, form.taxRate, Number(form.amountPaid) || 0),
     notes:          form.notes || '',
   }).select().single();
   if (error) throw makeError(error);
@@ -98,8 +98,8 @@ export const updateInvoice = async (id, form) => {
     check_out:      form.checkOut,
     line_items:     form.lineItems,
     tax_rate:       form.taxRate,
-    amount_paid:    form.amountPaid,
-    status:         calcStatus(form.lineItems, form.taxRate, form.amountPaid),
+    amount_paid:    Number(form.amountPaid) || 0,
+    status:         calcStatus(form.lineItems, form.taxRate, Number(form.amountPaid) || 0),
     notes:          form.notes || '',
     updated_at:     new Date().toISOString(),
   }).eq('id', id).select().single();

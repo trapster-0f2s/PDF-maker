@@ -47,7 +47,7 @@ export default function InvoiceDetail({ notify }) {
   return (
     <div>
       <div className="page-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <Link to="/invoices" className="btn btn-icon">←</Link>
           <div>
             <h1 className="page-title">{inv.invoiceNumber}</h1>
@@ -55,7 +55,7 @@ export default function InvoiceDetail({ notify }) {
           </div>
           <span className={`badge badge-${inv.status}`}>{inv.status}</span>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button className="btn btn-outline" onClick={handlePDF}>↓ Download PDF</button>
           <Link to={`/invoices/${id}/edit`} className="btn btn-outline">Edit</Link>
           <button className="btn btn-danger" onClick={handleDelete}>Delete</button>
@@ -120,7 +120,7 @@ export default function InvoiceDetail({ notify }) {
                 <div style={{ width: 260 }} className="totals-block">
                   <div className="total-row"><span>Subtotal</span><span>{fmtNAD(subtotal)}</span></div>
                   <div className="total-row"><span>VAT ({inv.taxRate}%)</span><span>{fmtNAD(tax)}</span></div>
-                  <div className="total-row" style={{ color: 'var(--green-fg)' }}><span>Amount Paid</span><span>− {fmtNAD(inv.amountPaid)}</span></div>
+                  <div className="total-row" style={{ color: 'var(--green-fg)' }}><span>Amount Paid</span><span>- {fmtNAD(inv.amountPaid)}</span></div>
                   <div className="total-row final"><span>Balance Due</span><span style={{ color: balance > 0 ? 'var(--red-fg)' : 'var(--green-fg)' }}>{fmtNAD(Math.max(0, balance))}</span></div>
                 </div>
               </div>
