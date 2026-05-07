@@ -24,23 +24,26 @@ export default async function generatePDF(inv) {
   const statusText = bal <= 0 ? 'PAID' : (inv.amountPaid ?? inv.amount_paid) > 0 ? 'PARTIAL' : 'UNPAID';
 
   // Header with Logo
+  const centerX = W / 2;
+  const logoX = centerX - 30; // Center the logo and text block
+  const textX = logoX + 20;
   try {
     const logoResponse = await fetch('/ChateauLogo.JPG');
     if (logoResponse.ok) {
       const blob = await logoResponse.blob();
       const logoData = await blobToBase64(blob);
-      doc.addImage(logoData, 'JPEG', M, 14, 16, 16);
+      doc.addImage(logoData, 'JPEG', logoX, 14, 16, 16);
     }
   } catch (e) {
     // Fallback to text if image fails to load
     doc.setFillColor(26, 26, 26);
-    doc.roundedRect(M, 14, 16, 16, 2, 2, 'F');
+    doc.roundedRect(logoX, 14, 16, 16, 2, 2, 'F');
     doc.setTextColor(255,255,255);
-    doc.setFont('helvetica','bold').setFontSize(11).text('S', M+8, 24, { align: 'center' });
+    doc.setFont('helvetica','bold').setFontSize(11).text('S', logoX+8, 24, { align: 'center' });
   }
-  doc.setTextColor(26,26,26).setFont('helvetica','bold').setFontSize(14).text('Chateau Serene', M+20, 20);
+  doc.setTextColor(26,26,26).setFont('helvetica','bold').setFontSize(14).text('Chateau Serene', textX, 20);
   doc.setFont('helvetica','normal').setFontSize(8).setTextColor(130,130,130)
-     .text('Windhoek, Namibia  ·  +264 61 000 0000', M+20, 26);
+     .text('Windhoek, Namibia  ·  +264 61 000 0000', textX, 26);
   doc.setFontSize(8).setTextColor(130,130,130)
      .text('Invoice No.', W-M, 18, { align: 'right' })
      .text('Date',        W-M, 28, { align: 'right' });
