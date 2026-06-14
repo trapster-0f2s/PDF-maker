@@ -43,7 +43,7 @@ export default async function generatePDF(inv) {
   }
   doc.setTextColor(26,26,26).setFont('helvetica','bold').setFontSize(14).text('Chateau Serene', textX, 20);
   doc.setFont('helvetica','normal').setFontSize(8).setTextColor(130,130,130)
-     .text('Windhoek, Namibia  ·  +264 61 000 0000', textX, 26);
+     .text('Windhoek, Namibia, +264 61 000 0000', textX, 26);
   doc.setFontSize(8).setTextColor(130,130,130)
      .text('Invoice No.', W-M, 18, { align: 'right' })
      .text('Date',        W-M, 28, { align: 'right' });
@@ -61,7 +61,7 @@ export default async function generatePDF(inv) {
   y += 5;
   doc.setFont('helvetica','bold').setFontSize(10).setTextColor(26,26,26)
      .text(inv.guestName || inv.guest_name, M, y)
-     .text(`${fmtDate(inv.checkIn || inv.check_in)} — ${fmtDate(inv.checkOut || inv.check_out)}`, W/2+5, y);
+     .text(`${fmtDate(inv.checkIn || inv.check_in)} - ${fmtDate(inv.checkOut || inv.check_out)}`, W/2+5, y);
   y += 5;
   doc.setFont('helvetica','normal').setFontSize(8).setTextColor(100,100,100)
      .text(inv.guestEmail || inv.guest_email, M, y)
@@ -97,7 +97,7 @@ export default async function generatePDF(inv) {
      .text('Subtotal',             lx, y).text(fmtNAD(sub),  W-M, y, { align: 'right' }); y += 6;
   doc.text(`VAT (${inv.taxRate ?? inv.tax_rate}%)`, lx, y).text(fmtNAD(tax), W-M, y, { align: 'right' }); y += 6;
   doc.setTextColor(59,109,17)
-     .text('Amount Paid', lx, y).text(`− ${fmtNAD(inv.amountPaid ?? inv.amount_paid)}`, W-M, y, { align: 'right' }); y += 3;
+     .text('Amount Paid', lx, y).text(`- ${fmtNAD(inv.amountPaid ?? inv.amount_paid)}`, W-M, y, { align: 'right' }); y += 3;
   doc.setDrawColor(26,26,26).setLineWidth(0.6).line(lx, y, W-M, y); y += 5;
   doc.setFont('helvetica','bold').setFontSize(10).setTextColor(26,26,26)
      .text('Balance Due', lx, y).text(fmtNAD(Math.max(0, bal)), W-M, y, { align: 'right' });

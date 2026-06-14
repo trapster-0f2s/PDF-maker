@@ -61,7 +61,7 @@ export default function Dashboard({ notify }) {
         </div>
         {recent.length === 0 ? (
           <div className="empty">
-            <div className="empty-icon">📄</div>
+            <div className="empty-icon">No.</div>
             <p>No invoices yet. <Link to="/invoices/new">Create your first one.</Link></p>
           </div>
         ) : (
@@ -82,10 +82,10 @@ export default function Dashboard({ notify }) {
                         <div style={{ fontWeight: 500 }}>{inv.guestName || inv.guest_name}</div>
                         <div style={{ fontSize: 12, color: 'var(--muted)' }}>{inv.guestEmail || inv.guest_email}</div>
                       </td>
-                      <td style={{ fontSize: 12 }}>{fmtDate(inv.checkIn || inv.check_in)} — {fmtDate(inv.checkOut || inv.check_out)}</td>
+                      <td style={{ fontSize: 12 }}>{fmtDate(inv.checkIn || inv.check_in)} - {fmtDate(inv.checkOut || inv.check_out)}</td>
                       <td style={{ fontWeight: 500 }}>{fmtNAD(total)}</td>
                       <td><span className={`badge badge-${inv.status}`}>{inv.status}</span></td>
-                      <td><button className="btn btn-outline btn-sm" onClick={() => handlePDF(inv)}>↓ PDF</button></td>
+                      <td><button className="btn btn-outline btn-sm" onClick={() => handlePDF(inv)}>PDF</button></td>
                     </tr>
                   );
                 })}

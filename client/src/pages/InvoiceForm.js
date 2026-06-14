@@ -1,10 +1,77 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { createInvoice, updateInvoice, getInvoice } from '../utils/api';
+import { COUNTRY_CODES, DEFAULT_COUNTRY } from '../utils/countryCodes';
 
-const today    = () => new Date().toISOString().split('T')[0];
-const nextWeek = () => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().split('T')[0]; };
-const genInvNo = () => { const d = new Date(); return `INV-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}${String(Math.floor(Math.random()*900)+100)}`; };
+const today = () => new Date().toISOString().split('T')[0];
+const nextWeek = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 7);
+  return d.toISOString().split('T')[0];
+};
+const genInvNo = () => {
+  const d = new Date();
+  return `INV-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}${String(Math.floor(Math.random() * 900) + 100)}`;
+};
+
+const ACCOMMODATION_DESCRIPTION = 'Accommodation';
+const LINE_ITEM_OPTIONS = [
+  ACCOMMODATION_DESCRIPTION,
+  'Breakfast',
+  'Lunch',
+  'Dinner',
+  'Laundry',
+  'Mini Bar',
+  'Airport Transfer',
+  'Late Checkout',
+  'Conference Room',
+  'Room Service',
+];
+
+const toNumber = (value, fallback = 0) => {
+  if (value === '' || value === null || value === undefined) return fallback;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+};
+
+const getCountry = (iso) => COUNTRY_CODES.find(country => country.iso === iso) || DEFAULT_COUNTRY;
+
+const splitPhoneNumber = (phone = '') => {
+  const trimmed = phone.trim();
+  if (!trimmed) return { countryIso: DEFAULT_COUNTRY.iso, localPhone: '' };
+
+  const country = [...COUNTRY_CODES]
+    .sort((a, b) => b.dialCode.length - a.dialCode.length)
+    .find(item => trimmed.startsWith(item.dialCode));
+
+  if (!country) {
+    return { countryIso: DEFAULT_COUNTRY.iso, localPhone: trimmed };
+  }
+
+  return {
+    countryIso: country.iso,
+    localPhone: trimmed.slice(country.dialCode.length).trim(),
+  };
+};
+
+const buildPhoneNumber = ({ phoneCountry, guestPhone }) => {
+  const localPhone = (guestPhone || '').trim();
+  if (!localPhone) return '';
+  if (localPhone.startsWith('+')) return localPhone;
+  return `${getCountry(phoneCountry).dialCode} ${localPhone}`;
+};
+
+const normalizeLineItems = (items = []) => {
+  if (!items.length) {
+    return [{ description: ACCOMMODATION_DESCRIPTION, quantity: 7, unitPrice: 1200 }];
+  }
+
+  return items.map(item => ({
+    description: item.description || '',
+    quantity: item.quantity ?? '',
+    unitPrice: item.unitPrice ?? '',
+  }));
+};
 
 export default function InvoiceForm({ notify }) {
   const { id } = useParams();
@@ -13,16 +80,22 @@ export default function InvoiceForm({ notify }) {
 
   const [form, setForm] = useState({
     invoiceNumber: genInvNo(),
-    guestName: '', guestEmail: '', guestPhone: '',
+    guestName: '',
+    guestEmail: '',
+    guestPhone: '',
+    phoneCountry: DEFAULT_COUNTRY.iso,
     roomType: 'Standard',
-    checkIn: today(), checkOut: nextWeek(),
-    lineItems: [{ description: 'Accommodation', quantity: 7, unitPrice: 1200 }],
-    taxRate: 15, amountPaid: '0', notes: '',
+    checkIn: today(),
+    checkOut: nextWeek(),
+    lineItems: [{ description: ACCOMMODATION_DESCRIPTION, quantity: 7, unitPrice: 1200 }],
+    taxRate: 15,
+    amountPaid: '',
+    notes: '',
   });
   const [loading, setLoading] = useState(false);
-  const [saving,  setSaving]  = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const phonePattern = /^\+?[0-9\s\-()]{7,20}$/;
+  const phonePattern = /^[0-9\s\-()]{5,20}$/;
   const isValidPhone = (phone) => phone === '' || phonePattern.test(phone);
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -31,14 +104,20 @@ export default function InvoiceForm({ notify }) {
     setLoading(true);
     getInvoice(id)
       .then(inv => {
+        const phone = splitPhoneNumber(inv.guestPhone || '');
         setForm({
           invoiceNumber: inv.invoiceNumber,
-          guestName: inv.guestName, guestEmail: inv.guestEmail, guestPhone: inv.guestPhone || '',
+          guestName: inv.guestName,
+          guestEmail: inv.guestEmail,
+          guestPhone: phone.localPhone,
+          phoneCountry: phone.countryIso,
           roomType: inv.roomType || '',
-          checkIn:  inv.checkIn.split('T')[0],
+          checkIn: inv.checkIn.split('T')[0],
           checkOut: inv.checkOut.split('T')[0],
-          lineItems: inv.lineItems,
-          taxRate: inv.taxRate, amountPaid: String(inv.amountPaid), notes: inv.notes || '',
+          lineItems: normalizeLineItems(inv.lineItems),
+          taxRate: inv.taxRate ?? 15,
+          amountPaid: toNumber(inv.amountPaid) > 0 ? String(inv.amountPaid) : '',
+          notes: inv.notes || '',
         });
       })
       .catch(err => {
@@ -48,44 +127,96 @@ export default function InvoiceForm({ notify }) {
       .finally(() => setLoading(false));
   }, [id, isEdit, notify]);
 
-  const set     = (key, val) => setForm(f => ({ ...f, [key]: val }));
+  const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
   const setLine = (i, key, val) => {
-    const lines = [...form.lineItems];
-    lines[i] = { ...lines[i], [key]: key === 'description' ? val : Number(val) };
-    setForm(f => ({ ...f, lineItems: lines }));
+    setForm(f => ({
+      ...f,
+      lineItems: f.lineItems.map((line, index) => (
+        index === i ? { ...line, [key]: val } : line
+      )),
+    }));
   };
-  const addLine = () => setForm(f => ({ ...f, lineItems: [...f.lineItems, { description: '', quantity: 1, unitPrice: 0 }] }));
-  const rmLine  = (i) => setForm(f => ({ ...f, lineItems: f.lineItems.filter((_, j) => j !== i) }));
+  const addLine = () => {
+    setForm(f => ({
+      ...f,
+      lineItems: [...f.lineItems, { description: '', quantity: 1, unitPrice: '' }],
+    }));
+  };
+  const rmLine = (i) => {
+    setForm(f => ({ ...f, lineItems: f.lineItems.filter((_, j) => j !== i) }));
+  };
 
-  const subtotal = form.lineItems.reduce((s, l) => s + l.quantity * l.unitPrice, 0);
-  const tax      = subtotal * (form.taxRate / 100);
-  const total    = subtotal + tax;
-  const balance  = total - (Number(form.amountPaid) || 0);
-  const fmtNAD   = n => 'N$ ' + Number(n).toLocaleString('en-NA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const selectedCountry = getCountry(form.phoneCountry);
+  const subtotal = form.lineItems.reduce((s, l) => s + toNumber(l.quantity) * toNumber(l.unitPrice), 0);
+  const tax = subtotal * (toNumber(form.taxRate) / 100);
+  const total = subtotal + tax;
+  const balance = total - toNumber(form.amountPaid);
+  const fmtNAD = n => 'N$ ' + Number(n).toLocaleString('en-NA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isValidEmail(form.guestEmail)) {
-      notify('Please enter a valid email address');
+      notify?.('Please enter a valid email address');
       return;
     }
-    if (!isValidPhone(form.guestPhone)) {
-      notify('Please enter a valid phone number');
+    if (!isValidPhone(form.guestPhone.trim())) {
+      notify?.('Please enter a valid local phone number');
       return;
     }
+    if (new Date(form.checkOut) <= new Date(form.checkIn)) {
+      notify?.('Check-out must be after check-in');
+      return;
+    }
+
+    const cleanLineItems = form.lineItems.map(line => ({
+      description: line.description.trim(),
+      quantity: toNumber(line.quantity),
+      unitPrice: toNumber(line.unitPrice),
+    }));
+
+    if (cleanLineItems.some(line => !line.description)) {
+      notify?.('Each line item needs a description');
+      return;
+    }
+    if (cleanLineItems.some(line => line.quantity <= 0)) {
+      notify?.('Line item quantities must be greater than zero');
+      return;
+    }
+    if (cleanLineItems.some(line => line.unitPrice < 0)) {
+      notify?.('Line item prices cannot be negative');
+      return;
+    }
+    if (toNumber(form.taxRate) < 0 || toNumber(form.taxRate) > 100) {
+      notify?.('Tax rate must be between 0 and 100');
+      return;
+    }
+    if (toNumber(form.amountPaid) < 0) {
+      notify?.('Amount paid cannot be negative');
+      return;
+    }
+
+    const { phoneCountry, ...invoiceForm } = form;
+    const payload = {
+      ...invoiceForm,
+      guestPhone: buildPhoneNumber(form),
+      lineItems: cleanLineItems,
+      taxRate: toNumber(form.taxRate),
+      amountPaid: toNumber(form.amountPaid),
+    };
+
     setSaving(true);
     try {
       if (isEdit) {
-        await updateInvoice(id, form);
-        notify('Invoice updated');
+        await updateInvoice(id, payload);
+        notify?.('Invoice updated');
         navigate(`/invoices/${id}`);
       } else {
-        const res = await createInvoice(form);
-        notify('Invoice created');
+        const res = await createInvoice(payload);
+        notify?.('Invoice created');
         navigate(`/invoices/${res.id}`);
       }
     } catch (err) {
-      notify(err.message || 'Save failed');
+      notify?.(err.message || 'Save failed');
     } finally {
       setSaving(false);
     }
@@ -103,15 +234,14 @@ export default function InvoiceForm({ notify }) {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20 }} className="invoice-form-grid">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
+        <div className="invoice-form-grid">
+          <div className="form-stack">
             <div className="card">
               <div className="card-header"><span className="card-title">Invoice Details</span></div>
               <div className="card-body">
                 <div className="form-row">
                   <div className="field"><label>Invoice Number</label><input value={form.invoiceNumber} onChange={e => set('invoiceNumber', e.target.value)} required /></div>
-                  <div className="field"><label>Tax Rate (%)</label><input type="number" min="0" max="100" value={form.taxRate} onChange={e => set('taxRate', Number(e.target.value))} /></div>
+                  <div className="field"><label>Tax Rate (%)</label><input type="number" min="0" max="100" step="0.01" value={form.taxRate} onChange={e => set('taxRate', e.target.value)} /></div>
                 </div>
               </div>
             </div>
@@ -123,7 +253,25 @@ export default function InvoiceForm({ notify }) {
                   <div className="field"><label>Full Name *</label><input value={form.guestName} onChange={e => set('guestName', e.target.value)} required placeholder="John Doe" /></div>
                   <div className="field"><label>Email *</label><input type="email" value={form.guestEmail} onChange={e => set('guestEmail', e.target.value)} required /></div>
                 </div>
-                <div className="field"><label>Phone</label><input type="tel" inputMode="tel" pattern="\\+?[0-9\\s\\-()]{7,20}" value={form.guestPhone} onChange={e => set('guestPhone', e.target.value)} placeholder="+264 81 000 0000" title="Digits, spaces, hyphens, parentheses, optional leading +" /></div>
+                <div className="field">
+                  <label>Phone</label>
+                  <div className="phone-input">
+                    <select value={form.phoneCountry} onChange={e => set('phoneCountry', e.target.value)} aria-label="Phone country code">
+                      {COUNTRY_CODES.map(country => (
+                        <option key={country.iso} value={country.iso}>{country.flag} {country.dialCode} {country.name}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="tel"
+                      inputMode="tel"
+                      pattern="[0-9\\s\\-()]{5,20}"
+                      value={form.guestPhone}
+                      onChange={e => set('guestPhone', e.target.value)}
+                      placeholder={selectedCountry.example}
+                      title="Local number only. Use the dropdown for the country code."
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -144,18 +292,20 @@ export default function InvoiceForm({ notify }) {
                 <button type="button" className="btn btn-outline btn-sm" onClick={addLine}>+ Add Item</button>
               </div>
               <div className="card-body">
+                <datalist id="line-item-options">
+                  {LINE_ITEM_OPTIONS.map(option => <option value={option} key={option} />)}
+                </datalist>
                 <div className="line-items-header">
-                  {['Description','Qty','Unit Price',''].map(h => (
-                    <div key={h} style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</div>
+                  {['Description', 'Qty', 'Unit Price', ''].map(h => (
+                    <div key={h}>{h}</div>
                   ))}
                 </div>
                 {form.lineItems.map((line, i) => (
                   <div key={i} className="line-items-row">
-                    <input value={line.description} onChange={e => setLine(i, 'description', e.target.value)} placeholder="Description" required />
-                    <input type="number" min="1" value={line.quantity} onChange={e => setLine(i, 'quantity', e.target.value)} />
-                    <input type="number" min="0" value={line.unitPrice} onChange={e => setLine(i, 'unitPrice', e.target.value)} />
-                    <button type="button" className="btn btn-icon" style={{ color: 'var(--red-fg)', borderColor: 'var(--red-bg)' }}
-                      onClick={() => rmLine(i)} disabled={form.lineItems.length === 1}>×</button>
+                    <input className="line-description-input" list="line-item-options" value={line.description} onChange={e => setLine(i, 'description', e.target.value)} placeholder={ACCOMMODATION_DESCRIPTION} required />
+                    <input className="line-qty-input" type="number" min="1" value={line.quantity} onChange={e => setLine(i, 'quantity', e.target.value)} placeholder="1" required />
+                    <input className="line-price-input" type="number" min="0" step="0.01" value={line.unitPrice} onChange={e => setLine(i, 'unitPrice', e.target.value)} placeholder="0.00" required />
+                    <button type="button" className="btn btn-icon line-remove-btn" onClick={() => rmLine(i)} disabled={form.lineItems.length === 1} aria-label="Remove line item">&times;</button>
                   </div>
                 ))}
               </div>
@@ -169,30 +319,30 @@ export default function InvoiceForm({ notify }) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div className="card" style={{ position: 'sticky', top: 20 }}>
+          <div className="summary-column">
+            <div className="card summary-card">
               <div className="card-header"><span className="card-title">Summary</span></div>
               <div className="card-body">
                 <div className="totals-block">
                   <div className="total-row"><span>Subtotal</span><span>{fmtNAD(subtotal)}</span></div>
-                  <div className="total-row"><span>VAT ({form.taxRate}%)</span><span>{fmtNAD(tax)}</span></div>
+                  <div className="total-row"><span>VAT ({toNumber(form.taxRate)}%)</span><span>{fmtNAD(tax)}</span></div>
                   <div className="total-row final"><span>Total</span><span>{fmtNAD(total)}</span></div>
                 </div>
                 <hr className="divider" />
                 <div className="field">
                   <label>Amount Paid (N$)</label>
-                  <input type="number" min="0" step="0.01" value={form.amountPaid} onChange={e => set('amountPaid', e.target.value === '' ? '0' : e.target.value)} />
+                  <input type="number" min="0" step="0.01" value={form.amountPaid} placeholder="0.00" onChange={e => set('amountPaid', e.target.value)} />
                 </div>
-                <div style={{ marginTop: 12 }}>
+                <div className="balance-row">
                   <div className="total-row" style={{ fontWeight: 500, color: balance > 0 ? 'var(--red-fg)' : 'var(--green-fg)' }}>
                     <span>Balance Due</span><span>{fmtNAD(Math.max(0, balance))}</span>
                   </div>
                 </div>
                 <hr className="divider" />
-                <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={saving}>
+                <button type="submit" className="btn btn-primary full-width" disabled={saving}>
                   {saving ? 'Saving...' : isEdit ? 'Update Invoice' : 'Create Invoice'}
                 </button>
-                <button type="button" className="btn btn-outline" style={{ width: '100%', marginTop: 8 }} onClick={() => navigate(-1)}>Cancel</button>
+                <button type="button" className="btn btn-outline full-width cancel-button" onClick={() => navigate(-1)}>Cancel</button>
               </div>
             </div>
           </div>

@@ -26,7 +26,7 @@ export default function InvoiceList({ notify }) {
         setPages(1);
       })
       .finally(() => setLoading(false));
-  }, [search, status, page]);
+  }, [search, status, page, notify]);
 
   useEffect(() => { fetchInvoices(); }, [fetchInvoices]);
 
@@ -67,7 +67,7 @@ export default function InvoiceList({ notify }) {
       <div className="card">
         {loading ? <div className="loading">Loading...</div> : invoices.length === 0 ? (
           <div className="empty">
-            <div className="empty-icon">📄</div>
+            <div className="empty-icon">No.</div>
             <p>No invoices found. <Link to="/invoices/new">Create one.</Link></p>
           </div>
         ) : (
@@ -96,7 +96,7 @@ export default function InvoiceList({ notify }) {
                       <td>
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button className="btn btn-outline btn-sm" onClick={() => navigate(`/invoices/${invoiceId}/edit`)}>Edit</button>
-                          <button className="btn btn-outline btn-sm" onClick={() => handlePDF(inv)}>↓ PDF</button>
+                          <button className="btn btn-outline btn-sm" onClick={() => handlePDF(inv)}>PDF</button>
                           <button className="btn btn-danger btn-sm"  onClick={() => handleDelete(invoiceId, inv.invoiceNumber)}>Del</button>
                         </div>
                       </td>

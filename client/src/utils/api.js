@@ -1,14 +1,79 @@
-console.log('SUPABASE URL:', process.env.REACT_APP_SUPABASE_URL);
-console.log('SUPABASE KEY:', process.env.REACT_APP_SUPABASE_ANON_KEY);
+// Mock data for local testing (no Supabase needed)
+const USE_MOCK_DATA = true;
 
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.REACT_APP_SUPABASE_URL,
-  process.env.REACT_APP_SUPABASE_ANON_KEY
-);
+// Mock Supabase client
+const supabase = {
+  from: () => ({
+    select: () => ({ eq: () => ({ single: () => ({}) }) }),
+  }),
+};
 
 export default supabase;
+
+// Mock invoice data
+let mockInvoices = [
+  {
+    id: '1',
+    invoice_number: 'INV-001',
+    guest_name: 'John Doe',
+    guest_email: 'john@example.com',
+    guest_phone: '555-0101',
+    room_type: 'Deluxe',
+    check_in: '2026-05-01',
+    check_out: '2026-05-05',
+    line_items: [
+      { id: 1, description: 'Room (4 nights)', quantity: 4, unitPrice: 150 },
+      { id: 2, description: 'Breakfast', quantity: 4, unitPrice: 15 },
+    ],
+    tax_rate: 10,
+    amount_paid: 660,
+    status: 'paid',
+    notes: 'Guest requested early checkout',
+    created_at: '2026-05-01T10:00:00Z',
+    updated_at: '2026-05-05T14:30:00Z',
+  },
+  {
+    id: '2',
+    invoice_number: 'INV-002',
+    guest_name: 'Jane Smith',
+    guest_email: 'jane@example.com',
+    guest_phone: '555-0102',
+    room_type: 'Standard',
+    check_in: '2026-05-06',
+    check_out: '2026-05-08',
+    line_items: [
+      { id: 1, description: 'Room (2 nights)', quantity: 2, unitPrice: 100 },
+    ],
+    tax_rate: 10,
+    amount_paid: 110,
+    status: 'partial',
+    notes: '',
+    created_at: '2026-05-06T11:00:00Z',
+    updated_at: '2026-05-08T10:00:00Z',
+  },
+  {
+    id: '3',
+    invoice_number: 'INV-003',
+    guest_name: 'Bob Johnson',
+    guest_email: 'bob@example.com',
+    guest_phone: '555-0103',
+    room_type: 'Suite',
+    check_in: '2026-05-10',
+    check_out: '2026-05-12',
+    line_items: [
+      { id: 1, description: 'Suite (2 nights)', quantity: 2, unitPrice: 250 },
+      { id: 2, description: 'Mini Bar', quantity: 1, unitPrice: 45 },
+    ],
+    tax_rate: 10,
+    amount_paid: 0,
+    status: 'unpaid',
+    notes: 'Invoice pending',
+    created_at: '2026-05-10T09:00:00Z',
+    updated_at: '2026-05-12T15:00:00Z',
+  },
+];
+
+let nextId = 4;
 
 const normalizeInvoice = (invoice) => ({
   ...invoice,
@@ -50,26 +115,52 @@ function calcStatus(lineItems, taxRate, amountPaid) {
 }
 
 export const getInvoices = async ({ search, status, page = 1, limit = 15 }) => {
-  let query = supabase.from('invoices').select('*', { count: 'exact' });
-  if (status) query = query.eq('status', status);
-  if (search) query = query.or(`guest_name.ilike.%${search}%,invoice_number.ilike.%${search}%`);
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 300));
+  
+  let filtered = mockInvoices;
+  
+  if (status) {
+    filtered = filtered.filter(inv => inv.status === status);
+  }
+  
+  if (search) {
+    const s = search.toLowerCase();
+    filtered = filtered.filter(inv => 
+      inv.guest_name.toLowerCase().includes(s) || 
+      inv.invoice_number.toLowerCase().includes(s)
+    );
+  }
+  
+  const total = filtered.length;
   const from = (page - 1) * limit;
-  const { data, error, count } = await query
-    .order('created_at', { ascending: false })
-    .range(from, from + limit - 1);
-  if (error) throw makeError(error);
-  return { invoices: data.map(normalizeInvoice), total: count, pages: Math.ceil(count / limit) };
+  const invoices = filtered
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(from, from + limit)
+    .map(normalizeInvoice);
+  
+  return { 
+    invoices, 
+    total, 
+    pages: Math.ceil(total / limit) 
+  };
 };
 
 export const getInvoice = async (id) => {
+  await new Promise(resolve => setTimeout(resolve, 200));
   if (!id || id === 'undefined') throw new Error('Invalid invoice ID');
-  const { data, error } = await supabase.from('invoices').select('*').eq('id', id).single();
-  if (error) throw makeError(error);
-  return normalizeInvoice(data);
+  
+  const invoice = mockInvoices.find(inv => inv.id === id);
+  if (!invoice) throw new Error('Invoice not found');
+  
+  return normalizeInvoice(invoice);
 };
 
 export const createInvoice = async (form) => {
-  const { data, error } = await supabase.from('invoices').insert({
+  await new Promise(resolve => setTimeout(resolve, 300));
+  
+  const newInvoice = {
+    id: String(nextId++),
     invoice_number: form.invoiceNumber,
     guest_name:     form.guestName,
     guest_email:    form.guestEmail,
@@ -82,13 +173,22 @@ export const createInvoice = async (form) => {
     amount_paid:    Number(form.amountPaid) || 0,
     status:         calcStatus(form.lineItems, form.taxRate, Number(form.amountPaid) || 0),
     notes:          form.notes || '',
-  }).select().single();
-  if (error) throw makeError(error);
-  return normalizeInvoice(data);
+    created_at:     new Date().toISOString(),
+    updated_at:     new Date().toISOString(),
+  };
+  
+  mockInvoices.push(newInvoice);
+  return normalizeInvoice(newInvoice);
 };
 
 export const updateInvoice = async (id, form) => {
-  const { data, error } = await supabase.from('invoices').update({
+  await new Promise(resolve => setTimeout(resolve, 300));
+  
+  const index = mockInvoices.findIndex(inv => inv.id === id);
+  if (index === -1) throw new Error('Invoice not found');
+  
+  mockInvoices[index] = {
+    ...mockInvoices[index],
     invoice_number: form.invoiceNumber,
     guest_name:     form.guestName,
     guest_email:    form.guestEmail,
@@ -102,21 +202,25 @@ export const updateInvoice = async (id, form) => {
     status:         calcStatus(form.lineItems, form.taxRate, Number(form.amountPaid) || 0),
     notes:          form.notes || '',
     updated_at:     new Date().toISOString(),
-  }).eq('id', id).select().single();
-  if (error) throw makeError(error);
-  return normalizeInvoice(data);
+  };
+  
+  return normalizeInvoice(mockInvoices[index]);
 };
 
 export const deleteInvoice = async (id) => {
-  const { error } = await supabase.from('invoices').delete().eq('id', id);
-  if (error) throw makeError(error);
+  await new Promise(resolve => setTimeout(resolve, 200));
+  
+  const index = mockInvoices.findIndex(inv => inv.id === id);
+  if (index === -1) throw new Error('Invoice not found');
+  
+  mockInvoices.splice(index, 1);
 };
 
 export const getStats = async () => {
-  const { data, error } = await supabase.from('invoices').select('*');
-  if (error) throw makeError(error);
+  await new Promise(resolve => setTimeout(resolve, 300));
+  
   let revenue = 0, outstanding = 0;
-  data.forEach(inv => {
+  mockInvoices.forEach(inv => {
     const items = inv.line_items || [];
     const sub     = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
     const total   = sub + sub * (inv.tax_rate / 100);
@@ -124,11 +228,12 @@ export const getStats = async () => {
     revenue     += total;
     outstanding += Math.max(0, balance);
   });
+  
   return {
-    total:       data.length,
-    paid:        data.filter(i => i.status === 'paid').length,
-    partial:     data.filter(i => i.status === 'partial').length,
-    unpaid:      data.filter(i => i.status === 'unpaid').length,
+    total:       mockInvoices.length,
+    paid:        mockInvoices.filter(i => i.status === 'paid').length,
+    partial:     mockInvoices.filter(i => i.status === 'partial').length,
+    unpaid:      mockInvoices.filter(i => i.status === 'unpaid').length,
     revenue,
     outstanding,
   };
