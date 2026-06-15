@@ -4,6 +4,10 @@ const fmtNAD  = n => 'N$ ' + Number(n).toLocaleString('en-NA', { minimumFraction
 const fmtDate = d => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const nights  = (a, b) => Math.max(0, Math.round((new Date(b) - new Date(a)) / 86400000));
 
+const COMPANY_NAME = 'Chateau Serene Trading CC';
+const COMPANY_REG_NO = 'Reg No. CC/2025/14544';
+const COMPANY_CONTACT = 'Windhoek, Namibia, +264813175424';
+
 const blobToBase64 = (blob) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -41,9 +45,10 @@ export default async function generatePDF(inv) {
     doc.setTextColor(255,255,255);
     doc.setFont('helvetica','bold').setFontSize(11).text('S', logoX+8, 24, { align: 'center' });
   }
-  doc.setTextColor(26,26,26).setFont('helvetica','bold').setFontSize(14).text('Chateau Serene', textX, 20);
+  doc.setTextColor(26,26,26).setFont('helvetica','bold').setFontSize(13).text(COMPANY_NAME, textX, 19);
   doc.setFont('helvetica','normal').setFontSize(8).setTextColor(130,130,130)
-     .text('Windhoek, Namibia, +264 61 000 0000', textX, 26);
+     .text(COMPANY_REG_NO, textX, 25)
+     .text(COMPANY_CONTACT, textX, 30);
   doc.setFontSize(8).setTextColor(130,130,130)
      .text('Invoice No.', W-M, 18, { align: 'right' })
      .text('Date',        W-M, 28, { align: 'right' });
@@ -112,7 +117,7 @@ export default async function generatePDF(inv) {
   // Footer
   doc.setDrawColor(220,220,220).setLineWidth(0.3).line(M, 278, W-M, 278);
   doc.setFont('helvetica','normal').setFontSize(7).setTextColor(170,170,170)
-     .text('Thank you for staying with Chateau Serene. Payment due within 7 days.', W/2, 283, { align: 'center' });
+     .text(`Thank you for staying with ${COMPANY_NAME}. Payment due within 7 days.`, W/2, 283, { align: 'center' });
 
   doc.save(`${inv.invoiceNumber || inv.invoice_number}.pdf`);
 }
