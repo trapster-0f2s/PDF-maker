@@ -25,6 +25,38 @@ input, select, textarea { font-family: inherit; font-size: 14px; }
 
 .layout { display: flex; min-height: 100vh; }
 
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg);
+}
+
+.auth-card {
+  width: min(100%, 380px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-logo {
+  width: 86px;
+  height: 86px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.auth-copy { display: grid; gap: 3px; margin-bottom: 4px; }
+.auth-kicker { color: var(--muted); font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; }
+.auth-copy h1 { font-family: 'DM Serif Display', serif; font-size: 28px; line-height: 1.1; }
+.auth-copy p:last-child { color: var(--muted); font-size: 13px; }
+
 .sidebar {
   width: 220px; flex-shrink: 0;
   background: var(--surface); border-right: 1px solid var(--border);
@@ -132,6 +164,23 @@ input, select, textarea { font-family: inherit; font-size: 14px; }
 .sidebar-toggle:hover {
   color: var(--text);
 }
+
+.sidebar-logout {
+  border: none;
+  border-top: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  padding: 12px 20px 0;
+  margin-top: 12px;
+  font-size: 13px;
+  text-align: left;
+}
+.sidebar.collapsed .sidebar-logout {
+  padding-left: 0;
+  padding-right: 0;
+  text-align: center;
+}
+.sidebar-logout:hover { color: var(--text); }
 
 .form-grid   { display: grid; gap: 16px; }
 .form-row    { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -278,6 +327,14 @@ tbody tr:hover td { background: var(--bg); }
 
   .sidebar.collapsed .nav-item .nav-label { display: inline; }
   .sidebar-toggle { display: none; }
+  .sidebar-logout, .sidebar.collapsed .sidebar-logout {
+    width: 100%;
+    margin-top: 8px;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    text-align: center;
+  }
 
   .main, .layout.sidebar-collapsed .main {
     margin-left: 0;
@@ -338,6 +395,9 @@ tbody tr:hover td { background: var(--bg); }
 
 @media (max-width: 480px) {
   .main { padding: 12px 10px; }
+  .auth-page { padding: 16px; }
+  .auth-card { padding: 22px; }
+  .auth-copy h1 { font-size: 24px; }
   
   .page-title { font-size: 18px; }
   .page-sub { font-size: 11px; }

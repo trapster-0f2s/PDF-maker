@@ -14,10 +14,72 @@ function Toast({ message, onDone }) {
   return <div className="toast">{message}</div>;
 }
 
+function LoginLanding({ onLogin, notify }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    if (username.trim() === 'admin' && password === 'admin') {
+      onLogin();
+      return;
+    }
+
+    notify('Invalid username or password');
+  };
+
+  return (
+    <div className="auth-page">
+      <form className="auth-card" onSubmit={handleSubmit}>
+        <img className="auth-logo" src="/ChateauLogo.JPG" alt="Chateau Serene logo" />
+        <div className="auth-copy">
+          <p className="auth-kicker">Welcome</p>
+          <h1>Chateau Serene Trading CC</h1>
+          <p>Sign in to manage invoices.</p>
+        </div>
+
+        <div className="field">
+          <label>Username</label>
+          <input value={username} onChange={e => setUsername(e.target.value)} autoComplete="username" autoFocus required />
+        </div>
+        <div className="field">
+          <label>Password</label>
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" required />
+        </div>
+        <button type="submit" className="btn btn-primary full-width">Login</button>
+      </form>
+    </div>
+  );
+}
+
 export default function App() {
   const [toast, setToast] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('invoiceAuth') === 'true');
   const notify = useCallback((msg) => setToast(msg), []);
+
+  const handleLogin = () => {
+    localStorage.setItem('invoiceAuth', 'true');
+    setIsAuthenticated(true);
+    notify('Welcome');
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('invoiceAuth');
+    setIsAuthenticated(false);
+    setSidebarCollapsed(false);
+    notify('Logged out');
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <>
+        <LoginLanding onLogin={handleLogin} notify={notify} />
+        {toast && <Toast message={toast} onDone={() => setToast(null)} />}
+      </>
+    );
+  }
 
   return (
     <div className={`layout${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
@@ -48,6 +110,9 @@ export default function App() {
         </nav>
         <button type="button" className="sidebar-toggle" onClick={() => setSidebarCollapsed(c => !c)}>
           {sidebarCollapsed ? 'Expand' : 'Collapse'}
+        </button>
+        <button type="button" className="sidebar-logout" onClick={handleLogout}>
+          Logout
         </button>
       </aside>
 
