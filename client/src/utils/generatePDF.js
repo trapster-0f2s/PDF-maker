@@ -23,6 +23,8 @@ export default async function generatePDF(inv) {
   const doc  = new jsPDF({ unit: 'mm', format: 'a4' });
   const W    = 210, M = 20;
   const lineItems = inv.lineItems || inv.line_items || [];
+  const guestEmail = inv.guestEmail || inv.guest_email || '';
+  const guestPhone = inv.guestPhone || inv.guest_phone || '';
   const sub  = lineItems.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
   const tax  = sub * ((inv.taxRate ?? inv.tax_rate) / 100);
   const total = sub + tax;
@@ -72,9 +74,15 @@ export default async function generatePDF(inv) {
      .text(inv.guestName || inv.guest_name, M, y)
      .text(`${fmtDate(inv.checkIn || inv.check_in)} - ${fmtDate(inv.checkOut || inv.check_out)}`, W/2+5, y);
   y += 5;
-  doc.setFont('helvetica','normal').setFontSize(8).setTextColor(100,100,100)
-     .text(inv.guestEmail || inv.guest_email, M, y)
-     .text(`${nights(inv.checkIn || inv.check_in, inv.checkOut || inv.check_out)} nights`, W/2+5, y);
+  doc.setFont('helvetica','normal').setFontSize(8).setTextColor(100,100,100);
+  if (guestPhone) {
+    doc.text(guestPhone, M, y);
+  }
+  doc.text(`${nights(inv.checkIn || inv.check_in, inv.checkOut || inv.check_out)} nights`, W/2+5, y);
+  if (guestPhone) y += 5;
+  if (guestEmail) {
+    doc.text(guestEmail, M, y);
+  }
 
   // Table
   y += 12;

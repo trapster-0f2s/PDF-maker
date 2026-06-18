@@ -95,8 +95,8 @@ export default function InvoiceDetail({ notify }) {
                 <div>
                   <div style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Billed To</div>
                   <div style={{ fontWeight: 500, fontSize: 15 }}>{inv.guestName}</div>
-                  <div style={{ fontSize: 13, color: 'var(--muted)' }}>{inv.guestEmail}</div>
                   {inv.guestPhone && <div style={{ fontSize: 13, color: 'var(--muted)' }}>{inv.guestPhone}</div>}
+                  <div style={{ fontSize: 13, color: 'var(--muted)' }}>{inv.guestEmail}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Stay Period</div>
