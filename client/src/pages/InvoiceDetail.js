@@ -6,6 +6,13 @@ import generatePDF from '../utils/generatePDF';
 const fmtNAD  = n => 'N$ ' + Number(n).toLocaleString('en-NA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtDate = d => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const nights  = (a, b) => Math.max(0, Math.round((new Date(b) - new Date(a)) / 86400000));
+const companyName = 'Chateau Serene Trading CC';
+const companyDetails = [
+  'Reg No. CC/2025/14544',
+  '+264813175424',
+  'admin@chateau.com',
+  'Swakopmund, Namibia',
+];
 
 export default function InvoiceDetail({ notify }) {
   const { id } = useParams();
@@ -69,8 +76,10 @@ export default function InvoiceDetail({ notify }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div className="logo-mark"><img src="/ChateauLogo.JPG" alt="Chateau Serene logo" /></div>
                 <div>
-                  <div style={{ fontFamily: "'DM Serif Display',serif", fontSize: 15 }}>Chateau Serene</div>
-                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>Windhoek, Namibia, +264 61 000 0000</div>
+                  <div style={{ fontFamily: "'DM Serif Display',serif", fontSize: 15 }}>{companyName}</div>
+                  {companyDetails.map(detail => (
+                    <div key={detail} style={{ fontSize: 11, color: 'var(--muted)' }}>{detail}</div>
+                  ))}
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
